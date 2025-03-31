@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import {
   Card,
   CardContent,
@@ -28,19 +28,23 @@ export default function JobRequests() {
   
   const navigate = useNavigate();
   
-  const { data: jobRequests = [], isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['jobRequests'],
     queryFn: getJobRequests
   });
 
-  const filteredJobs = jobRequests.filter((job: any) => {
+  // Extract job requests data from the response
+  const jobRequests = data?.data || [];
+
+  const filteredJobs = jobRequests.filter((job) => {
     const matchesJobType = jobTypeFilter === 'all' || job.job_type === jobTypeFilter;
     const matchesLocation = locationFilter === 'all' || job.location === locationFilter;
     return matchesJobType && matchesLocation;
   });
 
-  const jobTypes = [...new Set(jobRequests.map((job: any) => job.job_type))];
-  const locations = [...new Set(jobRequests.map((job: any) => job.location))];
+  // Extract unique job types and locations
+  const jobTypes = [...new Set(jobRequests.map((job) => job.job_type))];
+  const locations = [...new Set(jobRequests.map((job) => job.location))];
 
   const clearFilters = () => {
     setJobTypeFilter('all');
@@ -60,7 +64,7 @@ export default function JobRequests() {
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="all">All Job Types</SelectItem>
-                  {jobTypes.map((type: string) => (
+                  {jobTypes.map((type) => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectGroup>
@@ -74,7 +78,7 @@ export default function JobRequests() {
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="all">All Locations</SelectItem>
-                  {locations.map((location: string) => (
+                  {locations.map((location) => (
                     <SelectItem key={location} value={location}>{location}</SelectItem>
                   ))}
                 </SelectGroup>
@@ -103,7 +107,7 @@ export default function JobRequests() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredJobs.map((job: any) => (
+            {filteredJobs.map((job) => (
               <Card key={job.id} className="h-full flex flex-col">
                 <CardHeader>
                   <CardTitle>{job.title}</CardTitle>
