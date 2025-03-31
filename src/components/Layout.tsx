@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Briefcase, Menu, X } from 'lucide-react';
+import { Briefcase, Menu, X, User } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,13 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { user, signOut, isProvider } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -26,8 +34,43 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link to="/job-requests" className="text-gray-700 hover:text-blue-600 font-medium">Job Requests</Link>
             <Link to="/providers" className="text-gray-700 hover:text-blue-600 font-medium">Providers</Link>
             <Link to="/about" className="text-gray-700 hover:text-blue-600 font-medium">About</Link>
-            <Button variant="default" className="bg-orange-500 hover:bg-orange-600">Post a Job</Button>
-            <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">Sign In</Button>
+            
+            {user ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  onClick={() => navigate('/dashboard')}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-red-600 text-red-600 hover:bg-red-50"
+                  onClick={handleSignOut}
+                >
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="default" 
+                  className="bg-orange-500 hover:bg-orange-600"
+                  onClick={() => navigate('/job-requests')}
+                >
+                  Post a Job
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  onClick={() => navigate('/sign-in')}
+                >
+                  Sign In
+                </Button>
+              </>
+            )}
           </nav>
           
           {/* Mobile Menu Toggle */}
@@ -48,8 +91,51 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Link to="/providers" className="px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">Providers</Link>
               <Link to="/about" className="px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600">About</Link>
               <div className="flex flex-col space-y-2 pt-2">
-                <Button variant="default" className="bg-orange-500 hover:bg-orange-600 w-full">Post a Job</Button>
-                <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 w-full">Sign In</Button>
+                {user ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50 w-full"
+                      onClick={() => {
+                        navigate('/dashboard');
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-red-600 text-red-600 hover:bg-red-50 w-full"
+                      onClick={handleSignOut}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="default" 
+                      className="bg-orange-500 hover:bg-orange-600 w-full"
+                      onClick={() => {
+                        navigate('/job-requests');
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      Post a Job
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50 w-full"
+                      onClick={() => {
+                        navigate('/sign-in');
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -74,18 +160,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div>
               <h4 className="font-semibold mb-4">For Customers</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-blue-400">Post a Job</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-blue-400">How It Works</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-blue-400">Find Providers</a></li>
+                <li><Link to="/job-requests" className="text-gray-300 hover:text-blue-400">Post a Job</Link></li>
+                <li><Link to="/about" className="text-gray-300 hover:text-blue-400">How It Works</Link></li>
+                <li><Link to="/providers" className="text-gray-300 hover:text-blue-400">Find Providers</Link></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4">For Providers</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-blue-400">Join as Provider</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-blue-400">Find Jobs</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-blue-400">Provider Dashboard</a></li>
+                <li><Link to="/sign-up" className="text-gray-300 hover:text-blue-400">Join as Provider</Link></li>
+                <li><Link to="/job-requests" className="text-gray-300 hover:text-blue-400">Find Jobs</Link></li>
+                {user && isProvider && (
+                  <li><Link to="/dashboard" className="text-gray-300 hover:text-blue-400">Provider Dashboard</Link></li>
+                )}
               </ul>
             </div>
             
