@@ -1,17 +1,14 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Default development values - REPLACE THESE WITH YOUR ACTUAL VALUES IN PRODUCTION
-const FALLBACK_SUPABASE_URL = 'https://your-project-id.supabase.co';
-const FALLBACK_SUPABASE_ANON_KEY = 'your-anon-key';
-
+// Your actual Supabase URL
+const supabaseUrl = 'https://wuqotqftogqjtjxyqmrb.supabase.co';
 // Try to get environment variables, fallback to development values if not available
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 // Check if using fallback values and warn in development
-if (supabaseUrl === FALLBACK_SUPABASE_URL || supabaseAnonKey === FALLBACK_SUPABASE_ANON_KEY) {
-  console.warn('Using fallback Supabase credentials. Please set up your own Supabase project for full functionality.');
+if (supabaseAnonKey === 'your-anon-key') {
+  console.warn('Using fallback Supabase credentials. Please set up your VITE_SUPABASE_ANON_KEY environment variable for full functionality.');
   console.info('Follow the setup instructions in the README.md file to connect to your Supabase project.');
 }
 
