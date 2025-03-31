@@ -1,13 +1,18 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// These environment variables will need to be set in your deployment environment
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Default development values - REPLACE THESE WITH YOUR ACTUAL VALUES IN PRODUCTION
+const FALLBACK_SUPABASE_URL = 'https://your-project-id.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'your-anon-key';
 
-// For development, we'll check if credentials exist
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials are missing. Features requiring backend might not work properly.');
+// Try to get environment variables, fallback to development values if not available
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
+
+// Check if using fallback values and warn in development
+if (supabaseUrl === FALLBACK_SUPABASE_URL || supabaseAnonKey === FALLBACK_SUPABASE_ANON_KEY) {
+  console.warn('Using fallback Supabase credentials. Please set up your own Supabase project for full functionality.');
+  console.info('Follow the setup instructions in the README.md file to connect to your Supabase project.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

@@ -68,9 +68,27 @@ create table quotes (
 5. Set up Row Level Security (RLS) policies for these tables to control access.
 6. Enable authentication in your Supabase project.
 
-## Running the Application
+## Quick Start for Development
 
 1. Clone the repository
 2. Install dependencies: `npm install`
-3. Create a `.env` file in the root directory with the Supabase credentials
+3. Create a `.env` file in the root directory with the following:
+   ```
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 4. Start the development server: `npm run dev`
+
+## Deployment
+
+1. Set the environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in your deployment environment.
+2. Build the project: `npm run build`
+3. Deploy the build files from the `dist` directory to your hosting provider.
+
+## Features
+
+- User authentication for clients and labor providers
+- Post job requests with detailed specifications
+- Browse available job requests
+- Submit quotes for available jobs
+- Provider profiles with specialization and experience details
