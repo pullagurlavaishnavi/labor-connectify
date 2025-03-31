@@ -9,9 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { User, Phone, Mail, KeyRound, UserPlus } from 'lucide-react';
 
 const SignUp: React.FC = () => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +27,7 @@ const SignUp: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
       toast({
         title: "Missing information",
         description: "Please fill in all fields.",
@@ -52,10 +56,24 @@ const SignUp: React.FC = () => {
 
     try {
       setIsLoading(true);
-      await signUp(email, password);
+      const { data, error } = await signUp(email, password);
+      
+      if (error) throw error;
       
       // Set user type (this would typically be saved to the user's profile)
       setIsProvider(userType === 'provider');
+      
+      // Store additional user information (this would typically be done in a user profile table)
+      if (data.user) {
+        // In a real implementation, you would save the user profile to a database
+        console.log('User profile data to save:', {
+          user_id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+          user_type: userType
+        });
+      }
       
       if (userType === 'provider') {
         navigate('/provider-profile');
@@ -64,6 +82,12 @@ const SignUp: React.FC = () => {
       }
     } catch (error) {
       console.error('Sign up error:', error);
+      toast({
+        title: "Sign up failed",
+        description: "There was a problem creating your account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -97,42 +121,119 @@ const SignUp: React.FC = () => {
             </Tabs>
             
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-gray-500">
+                      <User size={18} />
+                    </span>
+                    <Input 
+                      id="firstName" 
+                      className="pl-10"
+                      placeholder="John" 
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-gray-500">
+                      <UserPlus size={18} />
+                    </span>
+                    <Input 
+                      id="lastName" 
+                      className="pl-10"
+                      placeholder="Doe" 
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="name@example.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-gray-500">
+                    <Mail size={18} />
+                  </span>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    className="pl-10"
+                    placeholder="name@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
               </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-gray-500">
+                    <Phone size={18} />
+                  </span>
+                  <Input 
+                    id="phone" 
+                    type="tel" 
+                    className="pl-10"
+                    placeholder="+1 (555) 123-4567" 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-gray-500">
+                    <KeyRound size={18} />
+                  </span>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    className="pl-10"
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-gray-500">
+                    <KeyRound size={18} />
+                  </span>
+                  <Input 
+                    id="confirmPassword" 
+                    type="password" 
+                    className="pl-10"
+                    placeholder="••••••••" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
               </div>
+              
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
