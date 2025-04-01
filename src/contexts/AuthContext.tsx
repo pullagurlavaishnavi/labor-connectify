@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
@@ -7,8 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   isProvider: boolean;
   setIsProvider: (value: boolean) => void;
@@ -23,14 +22,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for user on initial load
     const initAuth = async () => {
       setLoading(true);
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser || null);
         
-        // Check if the user is a provider (this would be stored in user metadata or a separate table)
         if (currentUser) {
           const { data } = await supabase
             .from('providers')
@@ -49,7 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initAuth();
 
-    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user || null);
@@ -67,20 +63,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSignIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
       toast({
         title: "Welcome back!",
         description: "You've successfully signed in.",
       });
+      
+      return { data, error: null };
     } catch (error: any) {
       toast({
         title: "Sign in failed",
         description: error.message || "Unable to sign in. Please try again.",
         variant: "destructive",
       });
-      throw error;
+      return { data: null, error };
     } finally {
       setLoading(false);
     }
@@ -89,20 +87,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSignUp = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       
       toast({
         title: "Account created!",
         description: "Your account has been successfully created. Please check your email for verification.",
       });
+      
+      return { data, error: null };
     } catch (error: any) {
       toast({
         title: "Sign up failed",
         description: error.message || "Unable to create account. Please try again.",
         variant: "destructive",
       });
-      throw error;
+      return { data: null, error };
     } finally {
       setLoading(false);
     }

@@ -15,6 +15,8 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import ProviderProfile from "./pages/ProviderProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PostJob from "./pages/PostJob";
+import BecomeProvider from "./pages/BecomeProvider";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,16 @@ const App = () => (
             <Route path="/provider-profile" element={
               <ProtectedRoute>
                 <ProviderProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/post-job" element={
+              <ProtectedRoute>
+                <PostJob />
+              </ProtectedRoute>
+            } />
+            <Route path="/become-provider" element={
+              <ProtectedRoute>
+                <BecomeProvider />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

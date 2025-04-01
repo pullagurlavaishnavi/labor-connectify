@@ -1,12 +1,42 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Briefcase, Clock, Users, Wrench, DollarSign, Shield, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const handlePostJobClick = () => {
+    if (user) {
+      navigate('/post-job');
+    } else {
+      toast({
+        title: "Please sign in",
+        description: "You need to sign in or create an account to post a job request.",
+      });
+      navigate('/sign-in');
+    }
+  };
+  
+  const handleBecomeProviderClick = () => {
+    if (user) {
+      navigate('/become-provider');
+    } else {
+      toast({
+        title: "Please sign in",
+        description: "You need to sign in or create an account to become a provider.",
+      });
+      navigate('/sign-in');
+    }
+  };
+
   const services = [
     { 
       title: "Welders", 
@@ -66,10 +96,19 @@ const Index = () => {
               Find qualified welders, fitters, helpers, and more for your mechanical industry and MSME needs.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Button 
+                size="lg" 
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+                onClick={handlePostJobClick}
+              >
                 Post a Job Request
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white text-white hover:bg-white/10"
+                onClick={handleBecomeProviderClick}
+              >
                 Become a Provider
               </Button>
             </div>
@@ -175,7 +214,13 @@ const Index = () => {
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Post your job requirement and start receiving quotes from qualified providers.
           </p>
-          <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">Post a Job Request Now</Button>
+          <Button 
+            size="lg" 
+            className="bg-white text-orange-600 hover:bg-gray-100"
+            onClick={handlePostJobClick}
+          >
+            Post a Job Request Now
+          </Button>
         </div>
       </section>
     </Layout>
