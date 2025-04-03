@@ -10,11 +10,13 @@ export type JobRequest = {
   id?: number;
   title: string;
   location: string;
-  duration: string;
+  start_date?: string;
+  start_time?: string;
+  hours_per_day?: number;
+  number_of_days?: number;
   workers: number;
-  budget: string;
-  description: string;
   job_type: string;
+  description: string;
   contact_info: string;
   user_id: string;
   created_at?: string;

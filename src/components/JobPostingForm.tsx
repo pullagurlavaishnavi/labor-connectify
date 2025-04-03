@@ -10,7 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createJobRequest } from '@/services/jobRequestService';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Calendar } from 'lucide-react';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger 
+} from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 // Define the JobCategory type to structure the multiple categories with worker counts
 type JobCategory = {
@@ -25,7 +32,10 @@ const JobPostingForm: React.FC = () => {
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [jobType, setJobType] = useState('full-time');
-  const [duration, setDuration] = useState('1 month');
+  const [numberOfDays, setNumberOfDays] = useState('1');
+  const [hoursPerDay, setHoursPerDay] = useState('8');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [startTime, setStartTime] = useState('09:00');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { user } = useAuth();
@@ -61,7 +71,7 @@ const JobPostingForm: React.FC = () => {
     // Validate all categories are selected
     const hasEmptyCategories = jobCategories.some(item => !item.category);
     
-    if (hasEmptyCategories || !description || !location || !jobType || !duration) {
+    if (hasEmptyCategories || !description || !location || !jobType || !startDate) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -83,8 +93,10 @@ const JobPostingForm: React.FC = () => {
         description,
         location,
         job_type: jobType,
-        budget: 'To be discussed',
-        duration,
+        start_date: startDate ? format(startDate, 'yyyy-MM-dd') : undefined,
+        start_time: startTime,
+        hours_per_day: parseInt(hoursPerDay, 10),
+        number_of_days: parseInt(numberOfDays, 10),
         workers: jobCategories.reduce((sum, item) => sum + item.count, 0),
         contact_info: user?.email || '',
         user_id: user?.id || '',
@@ -232,23 +244,95 @@ const JobPostingForm: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="duration">Duration</Label>
+              <Label htmlFor="startDate">Start Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="startDate"
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!startDate ? "text-muted-foreground" : ""}`}
+                    disabled={isSubmitting}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : <span>Select date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                    disabled={(date) => date < new Date()}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start Time</Label>
               <Select
-                value={duration}
-                onValueChange={setDuration}
+                value={startTime}
+                onValueChange={setStartTime}
                 disabled={isSubmitting}
               >
-                <SelectTrigger id="duration">
-                  <SelectValue placeholder="Select duration" />
+                <SelectTrigger id="startTime">
+                  <SelectValue placeholder="Select time" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1 week">1 Week</SelectItem>
-                  <SelectItem value="2 weeks">2 Weeks</SelectItem>
-                  <SelectItem value="1 month">1 Month</SelectItem>
-                  <SelectItem value="3 months">3 Months</SelectItem>
-                  <SelectItem value="6 months">6 Months</SelectItem>
-                  <SelectItem value="1 year">1 Year</SelectItem>
-                  <SelectItem value="permanent">Permanent</SelectItem>
+                  {Array.from({ length: 24 }).map((_, hour) => (
+                    <SelectItem key={hour} value={`${hour.toString().padStart(2, '0')}:00`}>
+                      {hour.toString().padStart(2, '0')}:00
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="hoursPerDay">Hours Per Day</Label>
+              <Select
+                value={hoursPerDay}
+                onValueChange={setHoursPerDay}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="hoursPerDay">
+                  <SelectValue placeholder="Select hours" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(hours => (
+                    <SelectItem key={hours} value={hours.toString()}>
+                      {hours} {hours === 1 ? 'hour' : 'hours'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="numberOfDays">Number of Days</Label>
+              <Select
+                value={numberOfDays}
+                onValueChange={setNumberOfDays}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="numberOfDays">
+                  <SelectValue placeholder="Select days" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Day</SelectItem>
+                  <SelectItem value="2">2 Days</SelectItem>
+                  <SelectItem value="3">3 Days</SelectItem>
+                  <SelectItem value="7">7 Days</SelectItem>
+                  <SelectItem value="14">14 Days</SelectItem>
+                  <SelectItem value="30">30 Days</SelectItem>
+                  <SelectItem value="60">60 Days</SelectItem>
+                  <SelectItem value="90">90 Days</SelectItem>
+                  <SelectItem value="180">180 Days</SelectItem>
+                  <SelectItem value="365">365 Days</SelectItem>
                 </SelectContent>
               </Select>
             </div>
