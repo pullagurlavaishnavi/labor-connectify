@@ -314,27 +314,16 @@ const JobPostingForm: React.FC = () => {
             
             <div className="space-y-2">
               <Label htmlFor="numberOfDays">Number of Days</Label>
-              <Select
+              <Input
+                id="numberOfDays"
+                type="number"
+                min="1"
+                placeholder="Enter number of days"
                 value={numberOfDays}
-                onValueChange={setNumberOfDays}
+                onChange={(e) => setNumberOfDays(e.target.value)}
                 disabled={isSubmitting}
-              >
-                <SelectTrigger id="numberOfDays">
-                  <SelectValue placeholder="Select days" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 Day</SelectItem>
-                  <SelectItem value="2">2 Days</SelectItem>
-                  <SelectItem value="3">3 Days</SelectItem>
-                  <SelectItem value="7">7 Days</SelectItem>
-                  <SelectItem value="14">14 Days</SelectItem>
-                  <SelectItem value="30">30 Days</SelectItem>
-                  <SelectItem value="60">60 Days</SelectItem>
-                  <SelectItem value="90">90 Days</SelectItem>
-                  <SelectItem value="180">180 Days</SelectItem>
-                  <SelectItem value="365">365 Days</SelectItem>
-                </SelectContent>
-              </Select>
+                required
+              />
             </div>
           </div>
           

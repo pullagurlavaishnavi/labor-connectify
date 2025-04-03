@@ -125,11 +125,11 @@ export default function JobRequests() {
                   <p className="text-gray-700 line-clamp-3">{job.description}</p>
                   <div className="mt-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Duration: {job.duration}</span>
+                      <span className="text-sm">Days: {job.number_of_days || 'N/A'}</span>
                       <span className="text-sm">Workers: {job.workers}</span>
                     </div>
                     <div className="mt-2">
-                      <span className="font-semibold">Budget: {job.budget}</span>
+                      <span className="font-semibold">Start Date: {job.start_date || 'N/A'}</span>
                     </div>
                   </div>
                 </CardContent>
