@@ -8,24 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
 import { createJobRequest } from '@/services/jobRequestService';
-import { CalendarIcon } from 'lucide-react';
 
 const JobPostingForm: React.FC = () => {
-  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [jobType, setJobType] = useState('full-time');
-  const [budget, setBudget] = useState('');
-  const [duration, setDuration] = useState('');
-  const [workers, setWorkers] = useState('');
-  const [deadline, setDeadline] = useState<Date | undefined>(undefined);
+  const [budget, setBudget] = useState('25000');
+  const [duration, setDuration] = useState('1 month');
+  const [workers, setWorkers] = useState('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -34,7 +28,7 @@ const JobPostingForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !description || !location || !jobType || !budget || !duration || !workers) {
+    if (!category || !description || !location || !jobType || !budget || !duration || !workers) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -47,7 +41,7 @@ const JobPostingForm: React.FC = () => {
       setIsSubmitting(true);
       
       const { data, error } = await createJobRequest({ 
-        title,
+        title: category, // Using the category as the title
         description,
         location,
         job_type: jobType,
@@ -89,15 +83,27 @@ const JobPostingForm: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Job Title</Label>
-            <Input 
-              id="title" 
-              placeholder="e.g. Need Welders for Factory Maintenance" 
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+            <Label htmlFor="category">Job Category</Label>
+            <Select
+              value={category}
+              onValueChange={setCategory}
               disabled={isSubmitting}
               required
-            />
+            >
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Select job category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="welder">Welder</SelectItem>
+                <SelectItem value="fitter">Fitter</SelectItem>
+                <SelectItem value="tid-welder">TID Welder</SelectItem>
+                <SelectItem value="mig-welder">MIG Welder</SelectItem>
+                <SelectItem value="assembly-worker">Assembly Worker</SelectItem>
+                <SelectItem value="packaging-worker">Packaging Worker</SelectItem>
+                <SelectItem value="helper">Helper</SelectItem>
+                <SelectItem value="welding-assistant">Welding Assistant</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
@@ -147,69 +153,69 @@ const JobPostingForm: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="duration">Duration</Label>
-              <Input 
-                id="duration" 
-                placeholder="e.g. 3 months" 
+              <Select
                 value={duration}
-                onChange={(e) => setDuration(e.target.value)}
+                onValueChange={setDuration}
                 disabled={isSubmitting}
-                required
-              />
+              >
+                <SelectTrigger id="duration">
+                  <SelectValue placeholder="Select duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1 week">1 Week</SelectItem>
+                  <SelectItem value="2 weeks">2 Weeks</SelectItem>
+                  <SelectItem value="1 month">1 Month</SelectItem>
+                  <SelectItem value="3 months">3 Months</SelectItem>
+                  <SelectItem value="6 months">6 Months</SelectItem>
+                  <SelectItem value="1 year">1 Year</SelectItem>
+                  <SelectItem value="permanent">Permanent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="workers">Number of Workers</Label>
-              <Input 
-                id="workers" 
-                type="number"
-                placeholder="e.g. 5" 
+              <Select
                 value={workers}
-                onChange={(e) => setWorkers(e.target.value)}
+                onValueChange={setWorkers}
                 disabled={isSubmitting}
-                required
-              />
+              >
+                <SelectTrigger id="workers">
+                  <SelectValue placeholder="Select number" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Worker</SelectItem>
+                  <SelectItem value="2">2 Workers</SelectItem>
+                  <SelectItem value="5">5 Workers</SelectItem>
+                  <SelectItem value="10">10 Workers</SelectItem>
+                  <SelectItem value="15">15 Workers</SelectItem>
+                  <SelectItem value="20">20 Workers</SelectItem>
+                  <SelectItem value="25">25+ Workers</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="budget">Budget (₹)</Label>
-            <Input 
-              id="budget" 
-              placeholder="e.g. 25000" 
+            <Select
               value={budget}
-              onChange={(e) => setBudget(e.target.value)}
+              onValueChange={setBudget}
               disabled={isSubmitting}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="deadline">Deadline (Optional)</Label>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  id="deadline"
-                  className={`w-full justify-start text-left font-normal ${!deadline ? "text-muted-foreground" : ""}`}
-                  disabled={isSubmitting}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {deadline ? format(deadline, "PPP") : "Select a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={deadline}
-                  onSelect={(date) => {
-                    setDeadline(date);
-                    setCalendarOpen(false);
-                  }}
-                  initialFocus
-                  disabled={(date) => date < new Date()}
-                />
-              </PopoverContent>
-            </Popover>
+            >
+              <SelectTrigger id="budget">
+                <SelectValue placeholder="Select budget" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10000">₹10,000</SelectItem>
+                <SelectItem value="25000">₹25,000</SelectItem>
+                <SelectItem value="50000">₹50,000</SelectItem>
+                <SelectItem value="75000">₹75,000</SelectItem>
+                <SelectItem value="100000">₹1,00,000</SelectItem>
+                <SelectItem value="200000">₹2,00,000</SelectItem>
+                <SelectItem value="500000">₹5,00,000+</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <Button type="submit" className="w-full" disabled={isSubmitting}>
