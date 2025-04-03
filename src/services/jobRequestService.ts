@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { jobRequests, getTimeDifference } from './mockData';
 
 export type JobRequest = {
   id?: number;
@@ -16,67 +16,53 @@ export type JobRequest = {
 };
 
 export const createJobRequest = async (jobRequest: Omit<JobRequest, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase
-    .from('job_requests')
-    .insert(jobRequest)
-    .select();
+  const newId = Math.max(...jobRequests.map(job => job.id || 0)) + 1;
+  const newJobRequest = { 
+    ...jobRequest, 
+    id: newId, 
+    created_at: new Date().toISOString() 
+  };
   
-  return { data, error };
+  jobRequests.push(newJobRequest);
+  
+  return { data: [newJobRequest], error: null };
 };
 
 export const getJobRequests = async () => {
-  const { data, error } = await supabase
-    .from('job_requests')
-    .select('*, quotes(count)')
-    .order('created_at', { ascending: false });
-  
-  return { 
-    data: data?.map(job => ({
+  // Add quotes count and format the date
+  const formattedJobRequests = jobRequests.map(job => {
+    const quoteCount = 2; // Mock quote count
+    return {
       ...job,
-      quotes: job.quotes?.[0]?.count || 0,
-      postedDate: `Posted ${getTimeDifference(job.created_at)}`
-    })) || [], 
-    error 
-  };
+      quotes: quoteCount,
+      postedDate: `Posted ${getTimeDifference(job.created_at || '')}`
+    };
+  });
+  
+  return { data: formattedJobRequests, error: null };
 };
 
 export const getJobRequestsByUser = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('job_requests')
-    .select('*, quotes(count)')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  const userJobs = jobRequests.filter(job => job.user_id === userId);
   
-  return { 
-    data: data?.map(job => ({
+  const formattedUserJobs = userJobs.map(job => {
+    const quoteCount = 1; // Mock quote count
+    return {
       ...job,
-      quotes: job.quotes?.[0]?.count || 0,
-      postedDate: `Posted ${getTimeDifference(job.created_at)}`
-    })) || [], 
-    error 
-  };
+      quotes: quoteCount,
+      postedDate: `Posted ${getTimeDifference(job.created_at || '')}`
+    };
+  });
+  
+  return { data: formattedUserJobs, error: null };
 };
 
 export const getJobRequestById = async (id: number) => {
-  const { data, error } = await supabase
-    .from('job_requests')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const job = jobRequests.find(job => job.id === id);
   
-  return { data, error };
-};
-
-// Helper function to format time
-const getTimeDifference = (timestamp: string) => {
-  const now = new Date();
-  const postDate = new Date(timestamp);
-  const diffInHours = Math.floor((now.getTime() - postDate.getTime()) / (1000 * 60 * 60));
+  if (!job) {
+    return { data: null, error: { message: 'Job request not found' } };
+  }
   
-  if (diffInHours < 1) return 'just now';
-  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-  const diffInMonths = Math.floor(diffInDays / 30);
-  return `${diffInMonths} month${diffInMonths > 1 ? 's' : ''} ago`;
+  return { data: job, error: null };
 };

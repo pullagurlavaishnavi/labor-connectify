@@ -1,44 +1,68 @@
 
-import { createClient } from '@supabase/supabase-js';
+// This file now provides mock functions to replace Supabase functionality
+// and maintain compatibility with existing code
 
-// Your actual Supabase URL
-const supabaseUrl = 'https://wuqotqftogqjtjxyqmrb.supabase.co';
-// Try to get environment variables, fallback to development values if not available
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+export const supabase = {
+  auth: {
+    signUp: async () => ({ data: null, error: null }),
+    signInWithPassword: async () => ({ data: null, error: null }),
+    signOut: async () => ({ error: null }),
+    getUser: async () => ({ data: { user: null } }),
+    onAuthStateChange: () => ({ 
+      data: { subscription: { unsubscribe: () => {} } }
+    }),
+  },
+  from: () => ({
+    insert: () => ({
+      select: async () => ({
+        data: [],
+        error: null,
+      }),
+    }),
+    select: (selector: string) => ({
+      eq: () => ({
+        single: async () => ({
+          data: null,
+          error: null,
+        }),
+        order: () => ({
+          data: [],
+          error: null,
+        }),
+      }),
+      order: () => ({
+        data: [],
+        error: null,
+      }),
+    }),
+    update: () => ({
+      eq: () => ({
+        select: async () => ({
+          data: [],
+          error: null,
+        }),
+      }),
+    }),
+  }),
+};
 
-// Check if using fallback values and warn in development
-if (supabaseAnonKey === 'your-anon-key') {
-  console.warn('Using fallback Supabase credentials. Please set up your VITE_SUPABASE_ANON_KEY environment variable for full functionality.');
-  console.info('Follow the setup instructions in the README.md file to connect to your Supabase project.');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Authentication helper functions
+// Authentication helper functions - these are now just mocks
 export const signUp = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-  
-  return { data, error };
+  console.log('Mock signUp called with:', email);
+  return { data: null, error: null };
 };
 
 export const signIn = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  
-  return { data, error };
+  console.log('Mock signIn called with:', email);
+  return { data: null, error: null };
 };
 
 export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  return { error };
+  console.log('Mock signOut called');
+  return { error: null };
 };
 
 export const getCurrentUser = async () => {
-  const { data } = await supabase.auth.getUser();
-  return data?.user;
+  console.log('Mock getCurrentUser called');
+  return null;
 };

@@ -3,14 +3,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Hammer, MapPin, Phone, Briefcase, Trophy } from 'lucide-react';
+import { createProviderProfile } from '@/services/providerService';
 
 const ProviderSignupForm: React.FC = () => {
   const [companyName, setCompanyName] = useState('');
@@ -58,22 +57,16 @@ const ProviderSignupForm: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      const { data, error } = await supabase
-        .from('providers')
-        .insert([
-          { 
-            user_id: user?.id,
-            company_name: companyName,
-            services,
-            experience,
-            address,
-            phone,
-            bio,
-            service_types: serviceTypes,
-            is_approved: false // Providers might need approval before they can submit quotes
-          }
-        ])
-        .select();
+      const { data, error } = await createProviderProfile({ 
+        user_id: user?.id || '',
+        company_name: companyName,
+        email: user?.email || '',
+        phone,
+        address,
+        specialization: serviceTypes,
+        years_in_business: parseInt(experience) || 0,
+        description: bio,
+      });
         
       if (error) throw error;
       
@@ -110,38 +103,26 @@ const ProviderSignupForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="companyName">Company Name</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <Building2 size={18} />
-              </span>
-              <Input 
-                id="companyName" 
-                placeholder="Your company name" 
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                className="pl-10"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input 
+              id="companyName" 
+              placeholder="Your company name" 
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="services">Services Offered</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <Hammer size={18} />
-              </span>
-              <Input 
-                id="services" 
-                placeholder="e.g. Welding, Fitting, Labor Supply" 
-                value={services}
-                onChange={(e) => setServices(e.target.value)}
-                className="pl-10"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input 
+              id="services" 
+              placeholder="e.g. Welding, Fitting, Labor Supply" 
+              value={services}
+              onChange={(e) => setServices(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
           
           <div className="space-y-2">
@@ -165,56 +146,38 @@ const ProviderSignupForm: React.FC = () => {
           
           <div className="space-y-2">
             <Label htmlFor="experience">Years of Experience</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <Trophy size={18} />
-              </span>
-              <Input 
-                id="experience" 
-                placeholder="e.g. 5 years" 
-                value={experience}
-                onChange={(e) => setExperience(e.target.value)}
-                className="pl-10"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input 
+              id="experience" 
+              placeholder="e.g. 5" 
+              value={experience}
+              onChange={(e) => setExperience(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="address">Business Address</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <MapPin size={18} />
-              </span>
-              <Input 
-                id="address" 
-                placeholder="Your business address" 
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="pl-10"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input 
+              id="address" 
+              placeholder="Your business address" 
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="phone">Business Phone</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <Phone size={18} />
-              </span>
-              <Input 
-                id="phone" 
-                placeholder="e.g. +91 9876543210" 
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="pl-10"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input 
+              id="phone" 
+              placeholder="e.g. +91 9876543210" 
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
           
           <div className="space-y-2">

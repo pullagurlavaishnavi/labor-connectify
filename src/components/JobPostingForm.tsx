@@ -3,17 +3,17 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Briefcase, MapPin, Clock, DollarSign } from 'lucide-react';
+import { createJobRequest } from '@/services/jobRequestService';
+import { CalendarIcon } from 'lucide-react';
 
 const JobPostingForm: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -21,6 +21,8 @@ const JobPostingForm: React.FC = () => {
   const [location, setLocation] = useState('');
   const [jobType, setJobType] = useState('full-time');
   const [budget, setBudget] = useState('');
+  const [duration, setDuration] = useState('');
+  const [workers, setWorkers] = useState('');
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -32,10 +34,10 @@ const JobPostingForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !description || !location || !jobType || !budget || !deadline) {
+    if (!title || !description || !location || !jobType || !budget || !duration || !workers) {
       toast({
         title: "Missing information",
-        description: "Please fill in all fields.",
+        description: "Please fill in all required fields.",
         variant: "destructive",
       });
       return;
@@ -44,21 +46,17 @@ const JobPostingForm: React.FC = () => {
     try {
       setIsSubmitting(true);
       
-      const { data, error } = await supabase
-        .from('job_requests')
-        .insert([
-          { 
-            title,
-            description,
-            location,
-            job_type: jobType,
-            budget: parseFloat(budget),
-            deadline: deadline?.toISOString(),
-            user_id: user?.id,
-            status: 'open'
-          }
-        ])
-        .select();
+      const { data, error } = await createJobRequest({ 
+        title,
+        description,
+        location,
+        job_type: jobType,
+        budget: `₹${budget}`,
+        duration,
+        workers: parseInt(workers),
+        contact_info: user?.email || '',
+        user_id: user?.id || '',
+      });
         
       if (error) throw error;
       
@@ -92,20 +90,14 @@ const JobPostingForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Job Title</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <Briefcase size={18} />
-              </span>
-              <Input 
-                id="title" 
-                placeholder="e.g. Need Welders for Factory Maintenance" 
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="pl-10"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input 
+              id="title" 
+              placeholder="e.g. Need Welders for Factory Maintenance" 
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
           
           <div className="space-y-2">
@@ -123,20 +115,14 @@ const JobPostingForm: React.FC = () => {
           
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <MapPin size={18} />
-              </span>
-              <Input 
-                id="location" 
-                placeholder="e.g. Mumbai, Maharashtra" 
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="pl-10"
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input 
+              id="location" 
+              placeholder="e.g. Mumbai, Maharashtra" 
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
           
           <div className="space-y-2">
@@ -158,19 +144,27 @@ const JobPostingForm: React.FC = () => {
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="budget">Budget (₹)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-500">
-                <DollarSign size={18} />
-              </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration</Label>
               <Input 
-                id="budget" 
-                type="number" 
-                placeholder="e.g. 25000" 
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                className="pl-10"
+                id="duration" 
+                placeholder="e.g. 3 months" 
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                disabled={isSubmitting}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="workers">Number of Workers</Label>
+              <Input 
+                id="workers" 
+                type="number"
+                placeholder="e.g. 5" 
+                value={workers}
+                onChange={(e) => setWorkers(e.target.value)}
                 disabled={isSubmitting}
                 required
               />
@@ -178,7 +172,19 @@ const JobPostingForm: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="deadline">Deadline</Label>
+            <Label htmlFor="budget">Budget (₹)</Label>
+            <Input 
+              id="budget" 
+              placeholder="e.g. 25000" 
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Deadline (Optional)</Label>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button

@@ -1,13 +1,21 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, getCurrentUser } from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
+
+import React, { createContext, useContext, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { users, providers } from '@/services/mockData';
+
+type User = {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+};
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, firstName?: string, lastName?: string, phone?: string) => Promise<any>;
   signOut: () => Promise<void>;
   isProvider: boolean;
   setIsProvider: (value: boolean) => void;
@@ -17,61 +25,34 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isProvider, setIsProvider] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const initAuth = async () => {
-      setLoading(true);
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser || null);
-        
-        if (currentUser) {
-          const { data } = await supabase
-            .from('providers')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .single();
-          
-          setIsProvider(!!data);
-        }
-      } catch (error) {
-        console.error('Error loading user:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user || null);
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      if (authListener && authListener.subscription) {
-        authListener.subscription.unsubscribe();
-      }
-    };
-  }, []);
 
   const handleSignIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      // Find user in our mock data
+      const foundUser = users.find(u => u.email === email && u.password === password);
+      
+      if (!foundUser) {
+        throw new Error('Invalid email or password');
+      }
+      
+      // Check if user is a provider
+      const providerProfile = providers.find(p => p.user_id === foundUser.id);
+      setIsProvider(!!providerProfile);
+      
+      // Create user object without password
+      const { password: _, ...userWithoutPassword } = foundUser;
+      setUser(userWithoutPassword);
       
       toast({
         title: "Welcome back!",
         description: "You've successfully signed in.",
       });
       
-      return { data, error: null };
+      return { data: { user: userWithoutPassword }, error: null };
     } catch (error: any) {
       toast({
         title: "Sign in failed",
@@ -84,18 +65,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const handleSignUp = async (email: string, password: string) => {
+  const handleSignUp = async (email: string, password: string, firstName?: string, lastName?: string, phone?: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
+      // Check if user already exists
+      const existingUser = users.find(u => u.email === email);
+      
+      if (existingUser) {
+        throw new Error('User with this email already exists');
+      }
+      
+      // Create new user
+      const newUser = {
+        id: `user-${users.length + 1}`,
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+      };
+      
+      // Add to users array (in a real app this would be saved to a database)
+      users.push(newUser);
+      
+      // Create user object without password
+      const { password: _, ...userWithoutPassword } = newUser;
+      setUser(userWithoutPassword);
       
       toast({
         title: "Account created!",
-        description: "Your account has been successfully created. Please check your email for verification.",
+        description: "Your account has been successfully created.",
       });
       
-      return { data, error: null };
+      return { data: { user: userWithoutPassword }, error: null };
     } catch (error: any) {
       toast({
         title: "Sign up failed",
@@ -111,8 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSignOut = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      setUser(null);
+      setIsProvider(false);
       
       toast({
         title: "Signed out",

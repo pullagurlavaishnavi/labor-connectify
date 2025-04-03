@@ -1,11 +1,11 @@
 
-import { supabase } from '@/lib/supabase';
+import { providers } from './mockData';
 
 export type Provider = {
   id?: string;
   user_id: string;
   company_name: string;
-  contact_person: string;
+  contact_person?: string;
   phone: string;
   email: string;
   address: string;
@@ -16,38 +16,44 @@ export type Provider = {
 };
 
 export const createProviderProfile = async (provider: Omit<Provider, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase
-    .from('providers')
-    .insert({ ...provider, id: provider.user_id })
-    .select();
+  const newProvider = { 
+    ...provider, 
+    id: provider.user_id, 
+    created_at: new Date().toISOString() 
+  };
   
-  return { data, error };
+  providers.push(newProvider);
+  
+  return { data: [newProvider], error: null };
 };
 
 export const getProviders = async () => {
-  const { data, error } = await supabase
-    .from('providers')
-    .select('*');
-  
-  return { data, error };
+  return { data: providers, error: null };
 };
 
 export const getProviderById = async (id: string) => {
-  const { data, error } = await supabase
-    .from('providers')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const provider = providers.find(provider => provider.id === id);
   
-  return { data, error };
+  if (!provider) {
+    return { data: null, error: { message: 'Provider not found' } };
+  }
+  
+  return { data: provider, error: null };
 };
 
 export const updateProviderProfile = async (id: string, updates: Partial<Provider>) => {
-  const { data, error } = await supabase
-    .from('providers')
-    .update(updates)
-    .eq('id', id)
-    .select();
+  const providerIndex = providers.findIndex(provider => provider.id === id);
   
-  return { data, error };
+  if (providerIndex === -1) {
+    return { data: null, error: { message: 'Provider not found' } };
+  }
+  
+  const updatedProvider = {
+    ...providers[providerIndex],
+    ...updates,
+  };
+  
+  providers[providerIndex] = updatedProvider;
+  
+  return { data: [updatedProvider], error: null };
 };
