@@ -1,6 +1,11 @@
 
 import { jobRequests, getTimeDifference } from './mockData';
 
+export type JobCategory = {
+  category: string;
+  count: number;
+};
+
 export type JobRequest = {
   id?: number;
   title: string;
@@ -13,6 +18,7 @@ export type JobRequest = {
   contact_info: string;
   user_id: string;
   created_at?: string;
+  categories?: JobCategory[];
 };
 
 export const createJobRequest = async (jobRequest: Omit<JobRequest, 'id' | 'created_at'>) => {

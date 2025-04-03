@@ -10,25 +10,58 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createJobRequest } from '@/services/jobRequestService';
+import { X, Plus } from 'lucide-react';
+
+// Define the JobCategory type to structure the multiple categories with worker counts
+type JobCategory = {
+  category: string;
+  count: number;
+};
 
 const JobPostingForm: React.FC = () => {
-  const [category, setCategory] = useState('');
+  const [jobCategories, setJobCategories] = useState<JobCategory[]>([
+    { category: '', count: 1 }
+  ]);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [jobType, setJobType] = useState('full-time');
-  const [budget, setBudget] = useState('25000');
   const [duration, setDuration] = useState('1 month');
-  const [workers, setWorkers] = useState('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const handleCategoryChange = (value: string, index: number) => {
+    const updatedCategories = [...jobCategories];
+    updatedCategories[index].category = value;
+    setJobCategories(updatedCategories);
+  };
+
+  const handleCountChange = (value: string, index: number) => {
+    const updatedCategories = [...jobCategories];
+    updatedCategories[index].count = parseInt(value, 10);
+    setJobCategories(updatedCategories);
+  };
+
+  const addJobCategory = () => {
+    setJobCategories([...jobCategories, { category: '', count: 1 }]);
+  };
+
+  const removeJobCategory = (index: number) => {
+    if (jobCategories.length > 1) {
+      const updatedCategories = jobCategories.filter((_, i) => i !== index);
+      setJobCategories(updatedCategories);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!category || !description || !location || !jobType || !budget || !duration || !workers) {
+    // Validate all categories are selected
+    const hasEmptyCategories = jobCategories.some(item => !item.category);
+    
+    if (hasEmptyCategories || !description || !location || !jobType || !duration) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -40,16 +73,22 @@ const JobPostingForm: React.FC = () => {
     try {
       setIsSubmitting(true);
       
+      // Create a title that summarizes all requested categories
+      const title = jobCategories
+        .map(item => `${item.count} ${item.category}`)
+        .join(", ");
+      
       const { data, error } = await createJobRequest({ 
-        title: category, // Using the category as the title
+        title, 
         description,
         location,
         job_type: jobType,
-        budget: `₹${budget}`,
+        budget: 'To be discussed',
         duration,
-        workers: parseInt(workers),
+        workers: jobCategories.reduce((sum, item) => sum + item.count, 0),
         contact_info: user?.email || '',
         user_id: user?.id || '',
+        categories: jobCategories,
       });
         
       if (error) throw error;
@@ -82,28 +121,69 @@ const JobPostingForm: React.FC = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="category">Job Category</Label>
-            <Select
-              value={category}
-              onValueChange={setCategory}
+          <div className="space-y-4">
+            <Label>Job Categories</Label>
+            {jobCategories.map((item, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Select
+                    value={item.category}
+                    onValueChange={(value) => handleCategoryChange(value, index)}
+                    disabled={isSubmitting}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select job category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="welder">Welder</SelectItem>
+                      <SelectItem value="fitter">Fitter</SelectItem>
+                      <SelectItem value="tid-welder">TID Welder</SelectItem>
+                      <SelectItem value="mig-welder">MIG Welder</SelectItem>
+                      <SelectItem value="assembly-worker">Assembly Worker</SelectItem>
+                      <SelectItem value="packaging-worker">Packaging Worker</SelectItem>
+                      <SelectItem value="helper">Helper</SelectItem>
+                      <SelectItem value="welding-assistant">Welding Assistant</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-36">
+                  <Select
+                    value={item.count.toString()}
+                    onValueChange={(value) => handleCountChange(value, index)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Count" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                        <SelectItem key={num} value={num.toString()}>{num} Worker{num > 1 ? 's' : ''}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => removeJobCategory(index)}
+                  disabled={jobCategories.length === 1 || isSubmitting}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addJobCategory}
               disabled={isSubmitting}
-              required
+              className="flex gap-1 items-center"
             >
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Select job category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="welder">Welder</SelectItem>
-                <SelectItem value="fitter">Fitter</SelectItem>
-                <SelectItem value="tid-welder">TID Welder</SelectItem>
-                <SelectItem value="mig-welder">MIG Welder</SelectItem>
-                <SelectItem value="assembly-worker">Assembly Worker</SelectItem>
-                <SelectItem value="packaging-worker">Packaging Worker</SelectItem>
-                <SelectItem value="helper">Helper</SelectItem>
-                <SelectItem value="welding-assistant">Welding Assistant</SelectItem>
-              </SelectContent>
-            </Select>
+              <Plus className="h-4 w-4" /> Add Another Category
+            </Button>
           </div>
           
           <div className="space-y-2">
@@ -131,26 +211,26 @@ const JobPostingForm: React.FC = () => {
             />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="jobType">Job Type</Label>
-            <Select
-              value={jobType}
-              onValueChange={setJobType}
-              disabled={isSubmitting}
-            >
-              <SelectTrigger id="jobType">
-                <SelectValue placeholder="Select job type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="full-time">Full-time</SelectItem>
-                <SelectItem value="part-time">Part-time</SelectItem>
-                <SelectItem value="contract">Contract</SelectItem>
-                <SelectItem value="one-time">One-time</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="jobType">Job Type</Label>
+              <Select
+                value={jobType}
+                onValueChange={setJobType}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger id="jobType">
+                  <SelectValue placeholder="Select job type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full-time">Full-time</SelectItem>
+                  <SelectItem value="part-time">Part-time</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                  <SelectItem value="one-time">One-time</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="duration">Duration</Label>
               <Select
@@ -172,50 +252,6 @@ const JobPostingForm: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="workers">Number of Workers</Label>
-              <Select
-                value={workers}
-                onValueChange={setWorkers}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger id="workers">
-                  <SelectValue placeholder="Select number" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 Worker</SelectItem>
-                  <SelectItem value="2">2 Workers</SelectItem>
-                  <SelectItem value="5">5 Workers</SelectItem>
-                  <SelectItem value="10">10 Workers</SelectItem>
-                  <SelectItem value="15">15 Workers</SelectItem>
-                  <SelectItem value="20">20 Workers</SelectItem>
-                  <SelectItem value="25">25+ Workers</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="budget">Budget (₹)</Label>
-            <Select
-              value={budget}
-              onValueChange={setBudget}
-              disabled={isSubmitting}
-            >
-              <SelectTrigger id="budget">
-                <SelectValue placeholder="Select budget" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10000">₹10,000</SelectItem>
-                <SelectItem value="25000">₹25,000</SelectItem>
-                <SelectItem value="50000">₹50,000</SelectItem>
-                <SelectItem value="75000">₹75,000</SelectItem>
-                <SelectItem value="100000">₹1,00,000</SelectItem>
-                <SelectItem value="200000">₹2,00,000</SelectItem>
-                <SelectItem value="500000">₹5,00,000+</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           
           <Button type="submit" className="w-full" disabled={isSubmitting}>
